@@ -19,6 +19,7 @@
 9. [Log de Rodadas](#-log-de-rodadas)
 10. [Decisões Técnicas e Qualidade dos Dados](#-decisões-técnicas-e-qualidade-dos-dados)
 11. [Como Executar](#-como-executar)
+12. [Melhorias Futuras](#-melhorias-futuras)
 
 ---
 
@@ -64,17 +65,19 @@ carregando os arquivos do **Google Cloud Storage**, processando-os em camadas no
 ```
 pmweb-pipeline/
 │
-├── README.md                    ← Este arquivo
+├── README.md                         ← Este arquivo
 │
 ├── dags/
-│   └── pmweb_pipeline.py        ← DAG principal do Airflow
+│   └── pmweb_pipeline.py             ← DAG principal do Airflow
 │
 └── sql/
-    ├── 1_stage.sql              ← Criação das tabelas Stage + bq load
-    ├── 2_raw.sql                ← Criação das tabelas Raw + INSERT
-    ├── 3_silver.sql             ← Limpeza e tipagem dos dados
-    ├── 4_gold.sql               ← Análises obrigatórias (Item 4)
-    └── 5_analytics.sql          ← Análises exploratórias (Item 2b)
+    ├── 0_log.sql                     ← Criação da tabela de log de rodadas
+    ├── 1_stage.sql                   ← Criação das tabelas Stage + bq load
+    ├── 2_raw.sql                     ← Criação das tabelas Raw + INSERT
+    ├── 3_silver.sql                  ← Limpeza e tipagem dos dados
+    ├── 4_gold.sql                    ← Análises obrigatórias (Item 4)
+    ├── 5_analytics.sql               ← Análises exploratórias (Item 2b)
+    └── 6_validacoes.sql              ← Validações realizadas em cada camada
 ```
 
 ---
@@ -97,7 +100,7 @@ pmweb-pipeline/
 
 Ingestão bruta dos arquivos CSV diretamente do GCS.
 Todos os campos são carregados como `STRING` para preservar o dado original sem nenhuma transformação.
-A tabela é **sobrescrita** (`WRITE_TRUNCATE`) a cada rodada — é uma área de passagem temporária.
+A tabela é **sobrescrita** (`WRITE_TRUNCATE`) a cada rodada, é uma área de passagem temporária.
 
 | Tabela         | Origem                              |
 |----------------|-------------------------------------|
@@ -109,7 +112,7 @@ A tabela é **sobrescrita** (`WRITE_TRUNCATE`) a cada rodada — é uma área de
 ### RAW — `pmweb_raw`
 
 Adiciona colunas de controle de carga sem alterar o conteúdo dos dados.
-Opera em modo **append** — cada rodada acumula historicamente, permitindo auditoria completa.
+Opera em modo **append**, cada rodada acumula historicamente, permitindo auditoria completa.
 
 | Coluna adicionada | Descrição                    |
 |-------------------|------------------------------|
@@ -129,29 +132,29 @@ Opera em modo **append** — cada rodada acumula historicamente, permitindo audi
 
 Camada de limpeza, tipagem correta e padronização.
 Sempre reflete a **última carga** da Raw (filtro por `MAX(DT_CARGA)`).
-É a única camada que realiza transformações — todas as análises partem daqui.
+É a única camada que realiza transformações, todas as análises partem daqui.
 
 **Principais tratamentos aplicados:**
 
 #### Cadastro
 
-| Problema encontrado                                          | Tratamento                                      |
-|--------------------------------------------------------------|-------------------------------------------------|
-| 3.259 linhas completamente vazias (9,1%)                    | Removidas                                       |
-| 87 datas de nascimento inválidas (ex: 29/02 em ano não bissexto) | `NULL` via `SAFE.PARSE_DATE`              |
-| 23 cidades com valores numéricos ou `'.'`                   | `NULL`                                          |
-| 68 UFs com abreviações inválidas (MIN, SAO, GOI...)         | `NULL` — apenas as 27 UFs oficiais mantidas     |
-| 47,3% de SEXO nulo                                          | Mantido sem imputação                           |
+| Problema encontrado                                               | Tratamento                                   |
+|-------------------------------------------------------------------|----------------------------------------------|
+| IDs nulos ou vazios                                               | Filtrados no INSERT da Raw — não entram      |
+| 87 datas de nascimento inválidas (ex: 29/02 em ano não bissexto) | `NULL` via `SAFE.PARSE_DATE`                 |
+| Cidades com valores numéricos ou `'.'`                            | `NULL` — 13.116 registros sem cidade (40,4%) |
+| UFs com abreviações inválidas (MIN, SAO, GOI...)                  | `NULL` — 13.401 registros sem UF (41,3%)     |
+| 42% de SEXO nulo                                                  | Mantido sem imputação                        |
 
 #### Pedido
 
-| Problema encontrado                                | Tratamento                                    |
-|----------------------------------------------------|-----------------------------------------------|
-| 23.654 pedidos com status `PENDENTE`              | Excluídos — sem desfecho definido             |
-| 616 pedidos com `VALOR_UNITARIO` negativo          | Excluídos — dado inválido                     |
-| 7.677 pedidos `CONFIRMADOS` com valor = 0         | Excluídos — sem significado analítico         |
-| 474 pedidos com `PARCELAS = 0`                     | Tratados como 1 (à vista)                     |
-| 6.911 pedidos com `PARCELAS` nulo                  | Tratados como 1 (à vista)                     |
+| Problema encontrado                              | Tratamento                              |
+|--------------------------------------------------|-----------------------------------------|
+| 23.654 pedidos com status `PENDENTE`             | Excluídos — sem desfecho definido       |
+| 616 pedidos com `VALOR_UNITARIO` negativo        | Excluídos — dado inválido               |
+| 7.677 pedidos `CONFIRMADOS` com valor = 0        | Excluídos — sem significado analítico   |
+| 474 pedidos com `PARCELAS = 0`                   | Tratados como 1 (à vista)              |
+| 6.911 pedidos com `PARCELAS` nulo                | Tratados como 1 (à vista)              |
 
 **Volume resultante após limpeza:**
 
@@ -182,12 +185,12 @@ Recriadas a cada rodada do pipeline após a Silver estar atualizada.
 
 **Especificação de Tiers:**
 
-| Valor mensal     | Tier   |
-|------------------|--------|
-| Até R$ 1.000     | Básico |
-| R$ 1.000 – 2.000 | Prata  |
-| R$ 2.000 – 5.000 | Ouro   |
-| Acima de R$ 5.000| Super  |
+| Valor mensal      | Tier   |
+|-------------------|--------|
+| Até R$ 1.000      | Básico |
+| R$ 1.000 – 2.000  | Prata  |
+| R$ 2.000 – 5.000  | Ouro   |
+| Acima de R$ 5.000 | Super  |
 
 ---
 
@@ -204,9 +207,9 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
                                                               ├──► load_silver_pedido ───┘        └──► log_gold_* (por tabela)
 ```
 
-| Operador                    | Uso                                        |
-|-----------------------------|--------------------------------------------|
-| `GCSToBigQueryOperator`     | Carga dos CSVs do GCS para o Stage         |
+| Operador                    | Uso                                          |
+|-----------------------------|----------------------------------------------|
+| `GCSToBigQueryOperator`     | Carga dos CSVs do GCS para o Stage           |
 | `BigQueryInsertJobOperator` | INSERT/CREATE nas camadas Raw, Silver e Gold |
 
 ---
@@ -215,13 +218,13 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 
 ### Item 4 — Consolidações obrigatórias
 
-| # | Análise                                              | Tabela Gold                         |
-|---|------------------------------------------------------|-------------------------------------|
-| 1 | Qtd de pedidos por cliente por semestre (parcelados) | `pedidos_por_cliente_semestre`      |
-| 2 | Ticket médio por cliente por ano e mês               | `ticket_medio_cliente_ano_mes`      |
-| 3 | Intervalo médio entre compras por ano                | `intervalo_medio_compras`           |
-| 4 | Classificação de clientes em tiers mensais           | `tiers_clientes`                    |
-| 5 | Comparativo % SOM e PAPELARIA 2019 x 2020           | `comparativo_som_papelaria`         |
+| # | Análise                                              | Tabela Gold                        |
+|---|------------------------------------------------------|------------------------------------|
+| 1 | Qtd de pedidos por cliente por semestre (parcelados) | `pedidos_por_cliente_semestre`     |
+| 2 | Ticket médio por cliente por ano e mês               | `ticket_medio_cliente_ano_mes`     |
+| 3 | Intervalo médio entre compras por ano                | `intervalo_medio_compras`          |
+| 4 | Classificação de clientes em tiers mensais           | `tiers_clientes`                   |
+| 5 | Comparativo % SOM e PAPELARIA 2019 x 2020           | `comparativo_som_papelaria`        |
 
 **Resultados validados:**
 - 13.411 clientes parcelados identificados
@@ -241,8 +244,6 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 ---
 
 ## 🗺 DER — Diagrama Entidade-Relacionamento
-
-> 📌 _Inserir imagem do DER aqui_
 
 **Relacionamento principal:** `cadastro.ID_CLIENTE` (PK) `1 ──► N` `pedido.ID_CLIENTE` (FK)
 
@@ -281,7 +282,7 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 ## 📋 Log de Rodadas
 
 Toda execução do pipeline registra uma entrada na tabela `pmweb_raw.log_rodadas`
-para cada tabela processada — Raw e Gold — permitindo rastrear:
+para cada tabela processada, Raw, Silver e Gold, permitindo rastrear:
 
 - Quando cada carga foi executada (`DATA_RODADA`)
 - Quantos registros foram incluídos (`QTD_INCLUIDO`)
@@ -300,7 +301,7 @@ ORDER BY DATA_RODADA DESC;
 ## 🔍 Decisões Técnicas e Qualidade dos Dados
 
 ### Por que Tabela Fixa na Gold em vez de View?
-No BigQuery o custo é baseado em processamento. Views recalculam a query a cada acesso —
+No BigQuery o custo é baseado em processamento. Views recalculam a query a cada acesso,
 tabelas fixas processam uma vez e armazenam o resultado. Como o pipeline roda 1x ao dia
 e as tabelas Gold são amplamente consultadas pelo Looker Studio, **tabelas fixas reduzem
 significativamente o custo operacional**.
@@ -317,7 +318,7 @@ pela `MAX(DT_CARGA)`, cada nova rodada duplicaria os dados. O filtro garante que
 sempre reflita o estado mais recente sem acumular duplicatas.
 
 ### Por que excluir pedidos PENDENTE?
-Pedidos com status `PENDENTE` não têm desfecho definido — não são receita confirmada
+Pedidos com status `PENDENTE` não têm desfecho definido, não são receita confirmada
 nem cancelamento. Incluí-los nas análises distorceria métricas de ticket médio,
 receita e comportamento de compra.
 
@@ -339,33 +340,50 @@ bq mk --dataset --location=US acoes-378306:pmweb_silver
 bq mk --dataset --location=US acoes-378306:pmweb_gold
 ```
 
-### Execução Manual (primeira vez)
+### Deploy da DAG
 ```bash
-# 1. Criar tabelas Stage
-bq query --use_legacy_sql=false < sql/1_stage.sql
-
-# 2. Criar tabelas Raw e Log
-bq query --use_legacy_sql=false < sql/2_raw.sql
-
-# 3. Criar tabelas Silver
-bq query --use_legacy_sql=false < sql/3_silver.sql
-
-# 4. Criar tabelas Gold obrigatórias
-bq query --use_legacy_sql=false < sql/4_gold.sql
-
-# 5. Criar tabelas Gold analíticas
-bq query --use_legacy_sql=false < sql/5_analytics.sql
-```
-
-### Deploy da DAG no Composer
-```bash
-# Copiar a DAG para o bucket do Composer
 gcloud storage cp dags/pmweb_pipeline.py \
   gs://BUCKET_DO_COMPOSER/dags/pmweb_pipeline.py
 ```
 
-Após o upload, a DAG aparece automaticamente na UI do Airflow em até 2 minutos.
+Após o upload a DAG aparece automaticamente na UI do Airflow em até 2 minutos
+e passa a executar todo dia à meia-noite automaticamente.
 
 ---
 
-*Desenvolvido como avaliação técnica para a posição de Data Analyst — PMWEB Data Services*
+## 🔮 Melhorias Futuras
+
+Itens identificados durante o desenvolvimento que agregariam valor ao pipeline
+mas não foram implementados devido ao tempo limitado do desafio:
+
+### Qualidade de Dados
+- **Testes de qualidade automatizados** com `dbt` ou `Great Expectations` — validar
+  volume, nulos, duplicatas e regras de negócio a cada rodada, com alertas em caso de falha
+- **Tratamento de schema evolution** — detectar automaticamente quando o CSV fonte
+  adicionar ou remover colunas sem quebrar o pipeline
+
+### Pipeline
+- **Idempotência na Raw** — antes de fazer append, verificar se aquela carga já foi
+  processada (via hash do arquivo ou data) para evitar duplicatas em caso de reprocessamento
+- **Alertas de falha** — notificação via e-mail ou Slack quando uma task da DAG falhar
+- **Sensor de arquivo** — usar `GCSObjectExistenceSensor` para a DAG só iniciar quando
+  o arquivo estiver disponível no bucket, em vez de rodar em horário fixo
+- **Tratamento de erro granular** — registrar falhas na tabela `log_rodadas` com a
+  mensagem de erro, não apenas `SUCESSO`
+
+### Modelagem
+- **Camada Silver com upsert** — em vez de recriar a tabela inteira, aplicar
+  `MERGE` para atualizar registros alterados e inserir apenas os novos,
+  registrando `QTD_ALTERADO` no log
+- **Tabela de dimensão de departamentos** — normalizar os departamentos em uma
+  tabela separada para facilitar manutenção e enriquecer com metadados
+
+### Visualização
+- **Dashboard no Looker Studio** — conectar as tabelas Gold e construir painéis
+  interativos para cada análise desenvolvida
+- **Agendamento de relatórios** — envio automático de resumos periódicos por e-mail
+  para stakeholders via Looker Studio
+
+---
+
+*Desenvolvido como avaliação técnica para a posição de Engenheiro de Dados Sênior — PMWEB*
