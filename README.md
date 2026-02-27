@@ -20,7 +20,7 @@
 10. [Decisões Técnicas e Qualidade dos Dados](#-decisões-técnicas-e-qualidade-dos-dados)
 11. [Como Executar](#-como-executar)
 12. [Melhorias Futuras](#-melhorias-futuras)
-
+13. [Artefatos do desenvolvimento](#-Artefatos-desenvolvimento)
 ---
 
 ## 🔭 Visão Geral
@@ -377,6 +377,12 @@ mas não foram implementados devido ao tempo limitado do desafio:
   registrando `QTD_ALTERADO` no log
 - **Tabela de dimensão de departamentos** — normalizar os departamentos em uma
   tabela separada para facilitar manutenção e enriquecer com metadados
+- **Particionamento e clustering em todas as tabelas Gold** — as tabelas analíticas
+sem dimensão temporal (comparativo_som_papelaria, pedidos_por_dia_semana,
+impacto_permissao_email, retencao_clientes, cancelamento_por_departamento)
+não foram particionadas por serem pequenas e estáticas, mas em um cenário de
+crescimento de dados poderiam se beneficiar de particionamento por DATA_RODADA
+e clustering pelos campos mais consultados
 
 ### Visualização
 - **Dashboard no Looker Studio** — conectar as tabelas Gold e construir painéis
@@ -385,5 +391,17 @@ mas não foram implementados devido ao tempo limitado do desafio:
   para stakeholders via Looker Studio
 
 ---
+
+## 🔮 Artefatos do desenvolvimento
+
+### Estrutura de tabelas no Big Query
+<p align="center">
+  <img  src="imagens/estrutura_de_tabelas_bigquery.png">
+</p>
+
+### Execução da Dag no Air Flow/Composer
+<p align="center">
+  <img  src="imagens/execucao_airflow.png">
+</p>
 
 *Desenvolvido como avaliação técnica para a posição de Engenheiro de Dados Sênior — PMWEB*
