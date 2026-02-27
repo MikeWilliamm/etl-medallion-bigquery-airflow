@@ -126,10 +126,10 @@ A tabela é **sobrescrita** (`WRITE_TRUNCATE`) a cada rodada, é uma área de pa
 | `stg_cadastro` | `gs://pmweb/CADASTRO/CADASTROS.csv` |
 | `stg_pedido`   | `gs://pmweb/PEDIDO/PEDIDOS.csv`     |
 
+Código disponível no [arquivo SQL/1 - Camada Stage.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/1%20-%20Camada%20Stage.sql)
 ---
 
 ### RAW — `pmweb_raw`
-
 Adiciona colunas de controle de carga sem alterar o conteúdo dos dados.
 Opera em modo **append**, cada rodada acumula historicamente, permitindo auditoria completa.
 
@@ -145,6 +145,7 @@ Opera em modo **append**, cada rodada acumula historicamente, permitindo auditor
 | `raw_pedido`   | Pedidos com metadados de carga  |
 | `log_rodadas`  | Log de todas as execuções       |
 
+Código disponível no [arquivo SQL/2 - Camada Raw.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/2%20-%20Camada%20Raw.sql)
 ---
 
 ### SILVER — `pmweb_silver`
@@ -182,6 +183,7 @@ Sempre reflete a **última carga** da Raw (filtro por `MAX(DT_CARGA)`).
 | `cadastro` | 32.477    |
 | `pedido`   | 102.211   |
 
+Código disponível no [arquivo SQL/3 - Camada Silver.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/3%20-%20Camada%20Silver.sql)
 ---
 
 ### GOLD — `pmweb_gold`
@@ -210,6 +212,8 @@ Recriadas a cada rodada do pipeline após a Silver estar atualizada.
 | R$ 1.000 – 2.000  | Prata  |
 | R$ 2.000 – 5.000  | Ouro   |
 | Acima de R$ 5.000 | Super  |
+ 
+ Código disponível nos arquivos [SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql) e [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
 
 ---
 
@@ -231,12 +235,13 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 | `GCSToBigQueryOperator`     | Carga dos CSVs do GCS para o Stage           |
 | `BigQueryInsertJobOperator` | INSERT/CREATE nas camadas Raw, Silver e Gold |
 
+
+Código disponível no [arquivo DAG/dag_pmweb_pipeline.py](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/DAG/dag_pmweb_pipeline.py)
 ---
 
 ## 📊 Análises Desenvolvidas
 
 ### Item 4 — Consolidações obrigatórias
-Disponível no [Arquivo SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql)
 
 | # | Análise                                              | Tabela Gold                        |
 |---|------------------------------------------------------|------------------------------------|
@@ -252,8 +257,10 @@ Disponível no [Arquivo SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm
 - SOM cresceu **+407%** de 2019 para 2020
 - PAPELARIA cresceu **+522%** de 2019 para 2020
 
+Código disponível no [Arquivo SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql)
+
 ### Item 2 — Análises exploratórias
-Disponível no Arquivo [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
+
 | # | Análise                                  | Insight principal                                            |
 |---|------------------------------------------|--------------------------------------------------------------|
 | 1 | Taxa de cancelamento por departamento    | DECORAÇÃO (25,3%) e BRINQUEDOS (24,3%) lideram cancelamentos |
@@ -261,6 +268,7 @@ Disponível no Arquivo [SQL/5 - Analytics Exploratoria.sql](https://github.com/M
 | 3 | Impacto da permissão de e-mail no ticket | Clientes opt-in gastam **19% a mais** por pedido             |
 | 4 | Crescimento da base de clientes por ano  | Desaceleração de ~13% ao ano: 12.510 (2019) → 9.074 (2021)  |
 
+Código disponível no Arquivo [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
 ---
 
 ## 🗺 DER — Diagrama Entidade-Relacionamento
