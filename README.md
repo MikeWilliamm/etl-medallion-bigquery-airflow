@@ -125,7 +125,8 @@ A tabela é **sobrescrita** (`WRITE_TRUNCATE`) a cada rodada, é uma área de pa
 |----------------|-------------------------------------|
 | `stg_cadastro` | `gs://pmweb/CADASTRO/CADASTROS.csv` |
 | `stg_pedido`   | `gs://pmweb/PEDIDO/PEDIDOS.csv`     |
-Código disponível no [arquivo SQL/1 - Camada Stage.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/1%20-%20Camada%20Stage.sql)
+
+  Código disponível no [arquivo SQL/1 - Camada Stage.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/1%20-%20Camada%20Stage.sql)
 ---
 
 ### RAW — `pmweb_raw`
