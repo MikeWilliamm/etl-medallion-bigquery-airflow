@@ -236,6 +236,7 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 ## 📊 Análises Desenvolvidas
 
 ### Item 4 — Consolidações obrigatórias
+Disponível no Arquivo SQL/4 - Camada Gold.sql[https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql]
 
 | # | Análise                                              | Tabela Gold                        |
 |---|------------------------------------------------------|------------------------------------|
@@ -252,7 +253,7 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 - PAPELARIA cresceu **+522%** de 2019 para 2020
 
 ### Item 2 — Análises exploratórias
-
+Disponível no Arquivo SQL/5 - Analytics Exploratoria.sql[https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql]
 | # | Análise                                  | Insight principal                                            |
 |---|------------------------------------------|--------------------------------------------------------------|
 | 1 | Taxa de cancelamento por departamento    | DECORAÇÃO (25,3%) e BRINQUEDOS (24,3%) lideram cancelamentos |
