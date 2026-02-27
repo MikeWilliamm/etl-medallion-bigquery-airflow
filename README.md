@@ -145,7 +145,7 @@ Opera em modo **append**, cada rodada acumula historicamente, permitindo auditor
 | `raw_pedido`   | Pedidos com metadados de carga  |
 | `log_rodadas`  | Log de todas as execuções       |
 
-Código disponível no [arquivo SQL/2 - Camada Raw.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/2%20-%20Camada%20Raw.sql)
+- Código disponível no [arquivo SQL/2 - Camada Raw.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/2%20-%20Camada%20Raw.sql)
 ---
 
 ### SILVER — `pmweb_silver`
@@ -183,7 +183,7 @@ Sempre reflete a **última carga** da Raw (filtro por `MAX(DT_CARGA)`).
 | `cadastro` | 32.477    |
 | `pedido`   | 102.211   |
 
-Código disponível no [arquivo SQL/3 - Camada Silver.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/3%20-%20Camada%20Silver.sql)
+- Código disponível no [arquivo SQL/3 - Camada Silver.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/3%20-%20Camada%20Silver.sql)
 ---
 
 ### GOLD — `pmweb_gold`
@@ -213,7 +213,7 @@ Recriadas a cada rodada do pipeline após a Silver estar atualizada.
 | R$ 2.000 – 5.000  | Ouro   |
 | Acima de R$ 5.000 | Super  |
  
- Código disponível nos arquivos [SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql) e [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
+ - Código disponível nos arquivos [SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql) e [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
 
 ---
 
@@ -236,7 +236,7 @@ load_stage_pedido ───► load_raw_pedido ───► log_pedido ───
 | `BigQueryInsertJobOperator` | INSERT/CREATE nas camadas Raw, Silver e Gold |
 
 
-Código disponível no [arquivo DAG/dag_pmweb_pipeline.py](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/DAG/dag_pmweb_pipeline.py)
+- Código disponível no [arquivo DAG/dag_pmweb_pipeline.py](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/DAG/dag_pmweb_pipeline.py)
 ---
 
 ## 📊 Análises Desenvolvidas
@@ -257,7 +257,7 @@ Código disponível no [arquivo DAG/dag_pmweb_pipeline.py](https://github.com/Mi
 - SOM cresceu **+407%** de 2019 para 2020
 - PAPELARIA cresceu **+522%** de 2019 para 2020
 
-Código disponível no [Arquivo SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql)
+- Código disponível no [Arquivo SQL/4 - Camada Gold.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/4%20-%20Camada%20Gold.sql)
 
 ### Item 2 — Análises exploratórias
 
@@ -268,7 +268,7 @@ Código disponível no [Arquivo SQL/4 - Camada Gold.sql](https://github.com/Mike
 | 3 | Impacto da permissão de e-mail no ticket | Clientes opt-in gastam **19% a mais** por pedido             |
 | 4 | Crescimento da base de clientes por ano  | Desaceleração de ~13% ao ano: 12.510 (2019) → 9.074 (2021)  |
 
-Código disponível no Arquivo [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
+- Código disponível no Arquivo [SQL/5 - Analytics Exploratoria.sql](https://github.com/MikeWilliamm/etl-medallion-bigquery-airflow/blob/main/SQL/5%20-%20Analytics%20Exploratoria.sql)
 ---
 
 ## 🗺 DER — Diagrama Entidade-Relacionamento
