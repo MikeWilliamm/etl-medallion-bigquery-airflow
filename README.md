@@ -9,18 +9,20 @@
 ## 📑 Índice
 
 1. [Visão Geral](#-visão-geral)
-2. [Arquitetura da Solução](#-arquitetura-da-solução)
-3. [Estrutura do Repositório](#-estrutura-do-repositório)
-4. [Infraestrutura GCP](#-infraestrutura-gcp)
-5. [Camadas de Dados](#-camadas-de-dados)
-6. [Pipeline de Integração (DAG)](#-pipeline-de-integração-dag)
-7. [Análises Desenvolvidas](#-análises-desenvolvidas)
-8. [DER — Diagrama Entidade-Relacionamento](#-der--diagrama-entidade-relacionamento)
-9. [Log de Rodadas](#-log-de-rodadas)
-10. [Decisões Técnicas e Qualidade dos Dados](#-decisões-técnicas-e-qualidade-dos-dados)
-11. [Como Executar](#-como-executar)
-12. [Melhorias Futuras](#-melhorias-futuras)
-13. [Artefatos do desenvolvimento](#-Artefatos-desenvolvimento)
+2. [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+3. [Arquitetura da Solução](#-arquitetura-da-solução)
+4. [Estrutura do Repositório](#-estrutura-do-repositório)
+5. [Infraestrutura GCP](#-infraestrutura-gcp)
+6. [Camadas de Dados](#-camadas-de-dados)
+7. [Pipeline de Integração (DAG)](#-pipeline-de-integração-dag)
+8. [Análises Desenvolvidas](#-análises-desenvolvidas)
+9. [DER — Diagrama Entidade-Relacionamento](#-der--diagrama-entidade-relacionamento)
+10. [Log de Rodadas](#-log-de-rodadas)
+11. [Decisões Técnicas e Qualidade dos Dados](#-decisões-técnicas-e-qualidade-dos-dados)
+12. [Como Executar](#-como-executar)
+13. [Melhorias Futuras](#-melhorias-futuras)
+14. [Evidências de Execução](#-evidências-de-execução)
+
 ---
 
 ## 🔭 Visão Geral
@@ -35,6 +37,19 @@ Este projeto implementa um pipeline completo de integração e análise de dados
 O pipeline é executado automaticamente **1x ao dia à meia-noite** (America/Sao_Paulo),
 carregando os arquivos do **Google Cloud Storage**, processando-os em camadas no
 **BigQuery** e disponibilizando os resultados para consumo no **Looker Studio**.
+
+---
+
+## 🛠 Tecnologias Utilizadas
+
+| Tecnologia           | Versão / Plano | Uso                                     |
+|----------------------|----------------|-----------------------------------------|
+| Google BigQuery      | —              | Armazenamento e processamento dos dados |
+| Google Cloud Storage | —              | Repositório dos arquivos CSV fonte      |
+| Cloud Composer       | `2.16.5`       | Orquestração do pipeline                |
+| Apache Airflow       | `2.10.5`       | Definição e execução da DAG             |
+| SQL (GoogleSQL)      | —              | Transformações e análises               |
+| Python               | `3.x`          | Definição da DAG                        |
 
 ---
 
@@ -71,13 +86,17 @@ pmweb-pipeline/
 │   └── pmweb_pipeline.py             ← DAG principal do Airflow
 │
 └── sql/
-    ├── 0_log.sql                     ← Criação da tabela de log de rodadas
-    ├── 1_stage.sql                   ← Criação das tabelas Stage + bq load
-    ├── 2_raw.sql                     ← Criação das tabelas Raw + INSERT
-    ├── 3_silver.sql                  ← Limpeza e tipagem dos dados
-    ├── 4_gold.sql                    ← Análises obrigatórias (Item 4)
-    ├── 5_analytics.sql               ← Análises exploratórias (Item 2b)
-    └── 6_validacoes.sql              ← Validações realizadas em cada camada
+│   ├── 0_log.sql                     ← Criação da tabela de log de rodadas
+│   ├── 1_stage.sql                   ← Criação das tabelas Stage + bq load
+│   ├── 2_raw.sql                     ← Criação das tabelas Raw + INSERT
+│   ├── 3_silver.sql                  ← Limpeza e tipagem dos dados
+│   ├── 4_gold.sql                    ← Análises obrigatórias (Item 4)
+│   ├── 5_analytics.sql               ← Análises exploratórias (Item 2b)
+│   └── 6_validacoes.sql              ← Validações realizadas em cada camada
+│
+├── imagens/
+│   ├── execucao_airflow.png
+│   └── estrutura_de_tabelas_bigquery.png
 ```
 
 ---
@@ -378,11 +397,11 @@ mas não foram implementados devido ao tempo limitado do desafio:
 - **Tabela de dimensão de departamentos** — normalizar os departamentos em uma
   tabela separada para facilitar manutenção e enriquecer com metadados
 - **Particionamento e clustering em todas as tabelas Gold** — as tabelas analíticas
-sem dimensão temporal (comparativo_som_papelaria, pedidos_por_dia_semana,
-impacto_permissao_email, retencao_clientes, cancelamento_por_departamento)
-não foram particionadas por serem pequenas e estáticas, mas em um cenário de
-crescimento de dados poderiam se beneficiar de particionamento por DATA_RODADA
-e clustering pelos campos mais consultados
+  sem dimensão temporal (`comparativo_som_papelaria`, `pedidos_por_dia_semana`,
+  `impacto_permissao_email`, `retencao_clientes`, `cancelamento_por_departamento`)
+  não foram particionadas por serem pequenas e estáticas, mas em um cenário de
+  crescimento de dados poderiam se beneficiar de particionamento por `DATA_RODADA`
+  e clustering pelos campos mais consultados
 
 ### Visualização
 - **Dashboard no Looker Studio** — conectar as tabelas Gold e construir painéis
@@ -392,16 +411,16 @@ e clustering pelos campos mais consultados
 
 ---
 
-## 🔮 Artefatos do desenvolvimento
+## 📸 Evidências de Execução
 
 ### Estrutura de tabelas no Big Query
 <p align="center">
-  <img  src="imagens/estrutura_de_tabelas_bigquery.png">
+  <img src="imagens/estrutura_de_tabelas_bigquery.png">
 </p>
 
 ### Execução da Dag no Air Flow/Composer
 <p align="center">
-  <img  src="imagens/execucao_airflow.png">
+  <img src="imagens/execucao_airflow.png">
 </p>
 
 *Desenvolvido como avaliação técnica para a posição de Engenheiro de Dados Sênior — PMWEB*
